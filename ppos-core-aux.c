@@ -6,6 +6,9 @@
 // Coloque aqui as suas modificações, p.ex. includes, defines variáveis, 
 // estruturas e funções
 void task_setprio (task_t *task, int prio) {
+    if (prio < -20 || prio > 20){
+        return;
+    }
     if (task == NULL) {
         taskExec -> prio = prio;
         return;
