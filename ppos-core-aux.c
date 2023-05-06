@@ -414,26 +414,23 @@ int after_mqueue_msgs (mqueue_t *queue) {
 }
 
 task_t * scheduler() {
-    // FCFS scheduler
-    // if( taskExec == NULL ){
-    //     return NULL;
-    // }
 
     if ( readyQueue != NULL ) {
         task_t *aux = readyQueue;
         task_t *aux_comeco = readyQueue;
         task_t *max_prio = readyQueue;
+        int f = 0;
 
-        
-        while(aux->next != aux_comeco){
-            if(aux->prio_dinamic < max_prio->prio_dinamic){
-                max_prio = aux;
-            } else if (aux->prio_dinamic == max_prio->prio_dinamic && aux->prio_static < max_prio->prio_static){
+        while(aux != aux_comeco || f != 1){
+            if(aux->prio_dinamic < max_prio->prio_dinamic || 
+                (aux->prio_dinamic == max_prio->prio_dinamic && aux->prio_static <= max_prio->prio_static)){
                 max_prio = aux;
             }
             aux->prio_dinamic--;
             aux = aux->next;
+            f = 1;
         }
+        
         max_prio->prio_dinamic = max_prio->prio_static;
         return max_prio;
     }
