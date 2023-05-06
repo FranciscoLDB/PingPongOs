@@ -10,16 +10,18 @@ void task_setprio (task_t *task, int prio) {
         return;
     }
     if (task == NULL) {
-        taskExec -> prio = prio;
+        taskExec -> prio_static = prio;
+        taskExec -> prio_dinamic = prio;
         return;
     }
-    task-> prio = prio;
+    task-> prio_static = prio;
+    task-> prio_dinamic = prio;
 }
 int task_getprio (task_t *task) {
     if (task == NULL) {
-        return taskExec -> prio;
+        return taskExec -> prio_static;
     }
-    return task-> prio;
+    return task-> prio_static;
 }
 
 // ****************************************************************************
@@ -413,8 +415,27 @@ int after_mqueue_msgs (mqueue_t *queue) {
 
 task_t * scheduler() {
     // FCFS scheduler
+    // if( taskExec == NULL ){
+    //     return NULL;
+    // }
+
     if ( readyQueue != NULL ) {
-        return readyQueue;
+        task_t *aux = readyQueue;
+        task_t *aux_comeco = readyQueue;
+        task_t *max_prio = readyQueue;
+
+        
+        while(aux->next != aux_comeco){
+            if(aux->prio_dinamic < max_prio->prio_dinamic){
+                max_prio = aux;
+            } else if (aux->prio_dinamic == max_prio->prio_dinamic && aux->prio_static < max_prio->prio_static){
+                max_prio = aux;
+            }
+            aux->prio_dinamic--;
+            aux = aux->next;
+        }
+        max_prio->prio_dinamic = max_prio->prio_static;
+        return max_prio;
     }
     return NULL;
 }
