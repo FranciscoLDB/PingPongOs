@@ -24,6 +24,31 @@ int task_getprio (task_t *task) {
     return task-> prio_static;
 }
 
+#include <sys/time.h>
+#include <signal.h>
+
+#define PREEMP 1
+
+struct sigaction action ;
+struct itimerval timer ;
+
+unsigned int systemTime = 0;
+unsigned int timePassed = 20 ; // Quantun das tarefas em execução
+
+void tratador (int signum){
+    systemTime++;
+    if(taskExec->taskU != 1){
+        timePassed--;
+        if(timePassed < 1){
+            queue_append((queue_t **) &readyQueue, (queue_t *) taskExec);
+            task_switch(&taskDisp);
+        }
+   }
+}
+
+
+
+
 // ****************************************************************************
 
 
@@ -37,6 +62,28 @@ void before_ppos_init () {
 
 void after_ppos_init () {
     // put your customization here
+    //ARMAR TEMPORIZADOR AQUI OU NO BEFORE PPOSINIT
+    if(PREEMP){
+        action.sa_handler = tratador ;
+        sigemptyset (&action.sa_mask) ;
+        action.sa_flags = 0 ;
+        if (sigaction (SIGALRM, &action, 0) < 0){
+            perror ("Erro em sigaction: ") ;
+            exit (1) ;
+        }
+
+        // ajusta valores do temporizador
+        timer.it_value.tv_sec  = 0 ; 
+        timer.it_interval.tv_sec  =  0; 
+        timer.it_value.tv_usec = 1;    // primeiro disparo, em micro-segundos    
+        timer.it_interval.tv_usec = 1000;   // disparos subsequentes, em micro-segundos 
+
+        // arma o temporizador ITIMER_REAL
+        if (setitimer (ITIMER_REAL, &timer, 0) < 0){
+            perror ("Erro em setitimer: ") ;
+            exit (1) ;
+        }
+    }
 #ifdef DEBUG
     printf("\ninit - AFTER");
 #endif
