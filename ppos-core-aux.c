@@ -426,7 +426,8 @@ task_t * scheduler() {
                 (aux->prio_dinamic == max_prio->prio_dinamic && aux->prio_static <= max_prio->prio_static)){
                 max_prio = aux;
             }
-            aux->prio_dinamic--;
+            if(aux->prio_dinamic > -20)
+                aux->prio_dinamic--;
             aux = aux->next;
             f = 1;
         }
