@@ -31,21 +31,26 @@ struct sigaction action ;
 struct itimerval timer ;
 
 unsigned int contQ = 20;
+unsigned int systemTime = 0;
+int timeExecution = 0; 
+extern unsigned char preemption;
 
-void trat_temporizador (int signum){    
+void trat_temporizador (int signum){ 
+    systemTime++;   
     if(taskExec->taskU){
         contQ--;
+        timeExecution++;
         if(contQ < 1){
             contQ = 20;
+            taskExec->timeExec += 20;
+            timeExecution = 0;
             queue_append((queue_t **) &readyQueue, (queue_t *) taskExec);
             task_switch(taskDisp);
         }
    }
 }
 
-unsigned int systemTime = 0;
-int timeExecution = 0; 
-extern unsigned char preemption;
+
 
 
 // ****************************************************************************
@@ -86,6 +91,14 @@ void after_ppos_init () {
 }
 
 void before_task_create (task_t *task ) {
+    
+#ifdef DEBUG
+    printf("\ntask_create - BEFORE - [%d]", task->id);
+#endif
+}
+
+void after_task_create (task_t *task ) {
+    // put your customization here
     // put your customization here
     task->totalTimeExec = systime();
     task->ativacoes = 0;
@@ -95,14 +108,6 @@ void before_task_create (task_t *task ) {
         task->timeExec = 0 ;
         task->taskU = 0;
     }
-#ifdef DEBUG
-    printf("\ntask_create - BEFORE - [%d]", task->id);
-#endif
-}
-
-void after_task_create (task_t *task ) {
-    // put your customization here
-    task->taskU = 1;
 #ifdef DEBUG
     printf("\ntask_create - AFTER - [%d]", task->id);
 #endif
@@ -117,7 +122,9 @@ void before_task_exit () {
 
 void after_task_exit () {
     // put your customization here
-    if(taskExec->taskU != 1 )taskExec->timeExec += timeExecution;
+    if(taskExec->taskU != 1 ){
+        taskExec->timeExec += timeExecution;
+    }
     int inicio = taskExec->totalTimeExec;
     int fim = systime();
     taskExec->totalTimeExec = fim - inicio;

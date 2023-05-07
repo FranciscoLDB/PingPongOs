@@ -27,7 +27,7 @@ typedef struct task_t
    // ... (outros campos deve ser adicionados APOS esse comentario)
     int prio_static;
     int prio_dinamic;
-    int taskU;
+    int taskU; // 1 se for do usuario
     unsigned int timeExec;
     unsigned int totalTimeExec; //tempo total da tarefa criada até a finalização
     unsigned int ativacoes;
