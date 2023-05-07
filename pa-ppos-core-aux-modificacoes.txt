@@ -1,0 +1,107 @@
+#include "ppos.h"
+#include "ppos-core-globals.h"
+
+
+// ****************************************************************************
+// Coloque aqui as suas modificações, p.ex. includes, defines variáveis, 
+// estruturas e funções
+void task_setprio (task_t *task, int prio) {
+    task->taskU = 1;
+    if (prio < -20 || prio > 20){
+        return;
+    }
+    if (task == NULL) {
+        taskExec -> prio_static = prio;
+        taskExec -> prio_dinamic = prio;
+        return;
+    }
+    task-> prio_static = prio;
+    task-> prio_dinamic = prio;
+}
+int task_getprio (task_t *task) {
+    if (task == NULL) {
+        return taskExec -> prio_static;
+    }
+    return task-> prio_static;
+}
+
+#include <sys/time.h>
+#include <signal.h>
+struct sigaction action ;
+struct itimerval timer ;
+
+unsigned int contQ = 20;
+
+void trat_temporizador (int signum){    
+    if(taskExec->taskU){
+        contQ--;
+        if(contQ < 1){
+            contQ = 20;
+            queue_append((queue_t **) &readyQueue, (queue_t *) taskExec);
+            task_switch(taskDisp);
+        }
+   }
+}
+
+// ****************************************************************************
+
+void after_ppos_init () {
+    // put your customization here
+    action.sa_handler = trat_temporizador ;
+    sigemptyset (&action.sa_mask) ;
+    action.sa_flags = 0 ;
+    if (sigaction (SIGALRM, &action, 0) < 0){
+        perror ("Erro em sigaction: ") ;
+        exit (1) ;
+    }
+
+    // ajusta valores do temporizador
+    timer.it_value.tv_sec  = 0 ; 
+    timer.it_interval.tv_sec  =  0; 
+    timer.it_value.tv_usec = 1;         // primeiro disparo, em micro-segundos    
+    timer.it_interval.tv_usec = 1000;   // disparos subsequentes, em micro-segundos 
+
+    // arma o temporizador ITIMER_REAL
+    if (setitimer (ITIMER_REAL, &timer, 0) < 0){
+        perror ("Erro em setitimer: ") ;
+        exit (1) ;
+    }
+#ifdef DEBUG
+    printf("\ninit - AFTER");
+#endif
+}
+
+void after_task_create (task_t *task ) {
+    // put your customization here
+    task->taskU = 1;
+#ifdef DEBUG
+    printf("\ntask_create - AFTER - [%d]", task->id);
+#endif
+}
+
+task_t * scheduler() {
+
+    if ( readyQueue != NULL ) {
+        task_t *aux = readyQueue;
+        task_t *aux_comeco = readyQueue;
+        task_t *max_prio = readyQueue;
+        int f = 0;
+
+        while(aux != aux_comeco || f != 1){
+            if(aux->prio_dinamic < max_prio->prio_dinamic || 
+                (aux->prio_dinamic == max_prio->prio_dinamic && aux->prio_static <= max_prio->prio_static)){
+                max_prio = aux;
+            }
+            if(aux->prio_dinamic > -20)
+                aux->prio_dinamic--;
+            aux = aux->next;
+            f = 1;
+        }
+        
+        max_prio->prio_dinamic = max_prio->prio_static;
+        return max_prio;
+    }
+    return NULL;
+}
+
+
