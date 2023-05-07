@@ -28,6 +28,9 @@ typedef struct task_t
     int prio_static;
     int prio_dinamic;
     int taskU;
+    unsigned int timeExec;
+    unsigned int totalTimeExec; //tempo total da tarefa criada até a finalização
+    unsigned int ativacoes;
     
 } task_t ;
 

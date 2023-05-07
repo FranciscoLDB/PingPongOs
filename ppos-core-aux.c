@@ -43,6 +43,11 @@ void trat_temporizador (int signum){
    }
 }
 
+unsigned int systemTime = 0;
+int timeExecution = 0; 
+extern unsigned char preemption;
+
+
 // ****************************************************************************
 
 
@@ -82,6 +87,14 @@ void after_ppos_init () {
 
 void before_task_create (task_t *task ) {
     // put your customization here
+    task->totalTimeExec = systime();
+    task->ativacoes = 0;
+    if(task == taskDisp){
+        task->taskU = 1;
+    }else{
+        task->timeExec = 0 ;
+        task->taskU = 0;
+    }
 #ifdef DEBUG
     printf("\ntask_create - BEFORE - [%d]", task->id);
 #endif
@@ -104,6 +117,12 @@ void before_task_exit () {
 
 void after_task_exit () {
     // put your customization here
+    if(taskExec->taskU != 1 )taskExec->timeExec += timeExecution;
+    int inicio = taskExec->totalTimeExec;
+    int fim = systime();
+    taskExec->totalTimeExec = fim - inicio;
+    
+    printf("\ntask_exit code:[%d] tempo total : %d | ativacoes: %d | tempo de processamento: %d \n", taskExec->id,taskExec->totalTimeExec, taskExec->ativacoes,taskExec->timeExec);
 #ifdef DEBUG
     printf("\ntask_exit - AFTER- [%d]", taskExec->id);
 #endif
@@ -111,6 +130,7 @@ void after_task_exit () {
 
 void before_task_switch ( task_t *task ) {
     // put your customization here
+    task->ativacoes++;
 #ifdef DEBUG
     printf("\ntask_switch - BEFORE - [%d -> %d]", taskExec->id, task->id);
 #endif
