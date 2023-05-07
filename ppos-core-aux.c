@@ -42,7 +42,7 @@ void trat_temporizador (int signum){
         timeExecution++;
         if(contQ < 1){
             contQ = 20;
-            taskExec->timeExec += 20;
+            taskExec->tempoProces += 20;
             timeExecution = 0;
             queue_append((queue_t **) &readyQueue, (queue_t *) taskExec);
             task_switch(taskDisp);
@@ -51,10 +51,7 @@ void trat_temporizador (int signum){
 }
 
 
-
-
 // ****************************************************************************
-
 
 
 void before_ppos_init () {
@@ -99,15 +96,10 @@ void before_task_create (task_t *task ) {
 
 void after_task_create (task_t *task ) {
     // put your customization here
-    // put your customization here
+    task->taskU = 1; 
     task->totalTimeExec = systime();
     task->ativacoes = 0;
-    if(task == taskDisp){
-        task->taskU = 1;
-    }else{
-        task->timeExec = 0 ;
-        task->taskU = 0;
-    }
+    task->tempoProces = 0 ;
 #ifdef DEBUG
     printf("\ntask_create - AFTER - [%d]", task->id);
 #endif
@@ -123,13 +115,10 @@ void before_task_exit () {
 void after_task_exit () {
     // put your customization here
     if(taskExec->taskU != 1 ){
-        taskExec->timeExec += timeExecution;
-    }
-    int inicio = taskExec->totalTimeExec;
-    int fim = systime();
-    taskExec->totalTimeExec = fim - inicio;
-    
-    printf("\ntask_exit code:[%d] tempo total : %d | ativacoes: %d | tempo de processamento: %d \n", taskExec->id,taskExec->totalTimeExec, taskExec->ativacoes,taskExec->timeExec);
+        taskExec->tempoProces += timeExecution;
+    }    
+    taskExec->totalTimeExec = systime() - taskExec->totalTimeExec;    
+    printf("\nTask [%d] tempo de execucao : %d | tempo de processamento: %d | ativacoes: %d\n", taskExec->id,taskExec->totalTimeExec, taskExec->tempoProces, taskExec->ativacoes);
 #ifdef DEBUG
     printf("\ntask_exit - AFTER- [%d]", taskExec->id);
 #endif
